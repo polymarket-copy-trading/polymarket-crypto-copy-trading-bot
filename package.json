@@ -1,0 +1,48 @@
+{
+  "name": "phemex-ai-optimized-trading-bot",
+  "version": "1.0.0",
+  "description": "Production-grade Phemex USDT-M futures trading bot with AI-driven signal analysis and adaptive grid optimization",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "phemex-ai-bot": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "cli": "tsx src/cli.ts",
+    "analyze": "tsx src/cli.ts analyze",
+    "simulate": "tsx src/cli.ts simulate",
+    "dry-run": "tsx src/cli.ts start --dry-run",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "phemex",
+    "trading-bot",
+    "ai",
+    "grid-trading",
+    "futures",
+    "typescript"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "pino": "^9.6.0",
+    "ioredis-om": "^5.10.2",
+    "pino-pretty": "^13.0.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

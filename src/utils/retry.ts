@@ -1,30 +1,15 @@
-export interface RetryOptions {
-  maxAttempts?: number;
-  baseDelayMs?: number;
-  maxDelayMs?: number;
-  shouldRetry?: (error: unknown) => boolean;
-}
-
-const DEFAULT_OPTIONS: Required<Omit<RetryOptions, "shouldRetry">> = {
-  maxAttempts: 3,
-  baseDelayMs: 500,
-  maxDelayMs: 10_000,
-};
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export async function withRetry<T>(
   fn: () => Promise<T>,
-  options: RetryOptions = {},
+  options: {
+    maxAttempts?: number;
+    baseDelayMs?: number;
+    maxDelayMs?: number;
+    label?: string;
+  } = {},
 ): Promise<T> {
-  const { maxAttempts, baseDelayMs, maxDelayMs } = {
-    ...DEFAULT_OPTIONS,
-    ...options,
-  };
-  const shouldRetry = options.shouldRetry ?? (() => true);
-
+  const maxAttempts = options.maxAttempts ?? 5;
+  const baseDelayMs = options.baseDelayMs ?? 250;
+  const maxDelayMs = options.maxDelayMs ?? 8000;
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -32,13 +17,18 @@ export async function withRetry<T>(
       return await fn();
     } catch (error) {
       lastError = error;
-      if (attempt === maxAttempts || !shouldRetry(error)) {
-        throw error;
-      }
+      if (attempt === maxAttempts) break;
       const delay = Math.min(baseDelayMs * 2 ** (attempt - 1), maxDelayMs);
-      await sleep(delay);
+      const jitter = Math.floor(Math.random() * 100);
+      await new Promise((r) => setTimeout(r, delay + jitter));
     }
   }
 
-  throw lastError;
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(`${options.label ?? "operation"} failed after ${maxAttempts} attempts`);
+}
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

@@ -1,0 +1,26 @@
+services:
+  copy-bot:
+    build: .
+    container_name: polymarket-copy-bot
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    command: ["node", "dist/index.js"]
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: polymarket-copy-bot-db
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_USER: polybot
+      POSTGRES_PASSWORD: polybot
+      POSTGRES_DB: copybot
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

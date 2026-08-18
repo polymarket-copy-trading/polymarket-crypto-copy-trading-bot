@@ -1,123 +1,95 @@
-import { config as loadEnv } from "dotenv";
 import { z } from "zod";
 
-loadEnv();
+const orderTypeSchema = z.enum(["LIMIT", "FOK", "FAK"]);
+const sizingModeSchema = z.enum(["fixed", "proportional", "balance_percent"]);
 
-const GridModeSchema = z.enum(["arithmetic", "geometric"]);
-
-export const ConfigSchema = z.object({
-  phemex: z.object({
-    apiKey: z.string().min(1),
-    apiSecret: z.string().min(1),
-    baseUrl: z.string().url(),
-  }),
-  trading: z.object({
-    symbol: z.string().min(1),
-    gridMode: GridModeSchema,
-    lowerPrice: z.number().positive(),
-    upperPrice: z.number().positive(),
-    levels: z.number().int().min(2).max(200),
-    orderSize: z.number().positive(),
-    posSide: z.enum(["Merged", "Long", "Short"]).default("Merged"),
-    maxQuoteExposure: z.number().positive().optional(),
-    stopLossPrice: z.number().positive().optional(),
-    takeProfitPrice: z.number().positive().optional(),
-    pollIntervalMs: z.number().int().min(1000).default(5000),
-    dryRun: z.boolean().default(false),
-  }),
-  ai: z.object({
-    enabled: z.boolean().default(true),
-    reoptimizeIntervalMs: z.number().int().min(60_000).default(300_000),
-    rsiPeriod: z.number().int().min(2).max(50).default(14),
-    emaFast: z.number().int().min(2).max(100).default(12),
-    emaSlow: z.number().int().min(2).max(200).default(26),
-    atrPeriod: z.number().int().min(2).max(50).default(14),
-    minConfidence: z.number().min(0).max(1).default(0.3),
-  }),
-  logLevel: z.string().default("info"),
+export const configSchema = z.object({
+  PRIVATE_KEY: z.string().regex(/^0x[a-fA-F0-9]{64}$/, "PRIVATE_KEY must be a 0x-prefixed 32-byte hex key"),
+  RPC_URL: z.string().url(),
+  LEADER_WALLETS: z
+    .string()
+    .min(1)
+    .transform((v) =>
+      v
+        .split(",")
+        .map((w) => w.trim())
+        .filter(Boolean),
+    )
+    .pipe(z.array(z.string().regex(/^0x[a-fA-F0-9]{40}$/)).min(1)),
+  FOLLOWER_WALLET: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/)
+    .optional(),
+  POSITION_MULTIPLIER: z.coerce.number().positive().default(0.25),
+  MAX_TRADE_USD: z.coerce.number().positive().default(100),
+  MIN_TRADE_USD: z.coerce.number().positive().default(5),
+  SIZING_MODE: sizingModeSchema.default("proportional"),
+  SLIPPAGE_TOLERANCE: z.coerce.number().min(0).max(1).default(0.02),
+  ORDER_TYPE: orderTypeSchema.default("LIMIT"),
+  COPY_SELLS: z
+    .union([z.boolean(), z.string()])
+    .transform((v) => v === true || v === "true")
+    .default(false),
+  MAX_SESSION_NOTIONAL: z.coerce.number().positive().default(500),
+  MAX_PER_MARKET_NOTIONAL: z.coerce.number().positive().default(150),
+  MAX_DAILY_LOSS_USD: z.coerce.number().positive().default(75),
+  AUTO_PAUSE_ON_DRAWDOWN: z
+    .union([z.boolean(), z.string()])
+    .transform((v) => v === true || v === "true")
+    .default(true),
+  MAX_CONCURRENT_MARKETS: z.coerce.number().int().positive().default(8),
+  USE_WEBSOCKET: z
+    .union([z.boolean(), z.string()])
+    .transform((v) => v === true || v === "true")
+    .default(true),
+  POLL_INTERVAL_MS: z.coerce.number().int().min(500).default(3000),
+  BACKFILL_HISTORICAL: z
+    .union([z.boolean(), z.string()])
+    .transform((v) => v === true || v === "true")
+    .default(false),
+  CRYPTO_ONLY: z
+    .union([z.boolean(), z.string()])
+    .transform((v) => v === true || v === "true")
+    .default(true),
+  RESOLUTION_CUTOFF_HOURS: z.coerce.number().int().min(0).default(6),
+  CLOB_HOST: z.string().url().default("https://clob.polymarket.com"),
+  GAMMA_HOST: z.string().url().default("https://gamma-api.polymarket.com"),
+  DATA_HOST: z.string().url().default("https://data-api.polymarket.com"),
+  RELAYER_HOST: z.string().url().default("https://relayer-v2.polymarket.com"),
+  WS_MARKET: z.string().url().default("wss://ws-subscriptions-clob.polymarket.com/ws/market"),
+  WS_USER: z.string().url().default("wss://ws-subscriptions-clob.polymarket.com/ws/user"),
+  WS_LIVE_DATA: z.string().url().default("wss://ws-live-data.polymarket.com"),
+  POLY_BUILDER_CODE: z.string().optional(),
+  DATABASE_PATH: z.string().default("./data/copy-bot.db"),
+  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
+  LOG_PRETTY: z
+    .union([z.boolean(), z.string()])
+    .transform((v) => v === true || v === "true")
+    .default(true),
+  METRICS_ENABLED: z
+    .union([z.boolean(), z.string()])
+    .transform((v) => v === true || v === "true")
+    .default(false),
+  METRICS_PORT: z.coerce.number().int().positive().default(9090),
+  DRY_RUN: z
+    .union([z.boolean(), z.string()])
+    .transform((v) => v === true || v === "true")
+    .default(true),
 });
 
-export type AppConfig = z.infer<typeof ConfigSchema>;
-export type GridMode = z.infer<typeof GridModeSchema>;
+export type AppConfig = z.infer<typeof configSchema>;
 
-/** Normalize BTC-USDT, btc_usdt → BTCUSDT */
-export function normalizeSymbol(raw: string): string {
-  return raw.replace(/[-_/ ]/g, "").toUpperCase();
-}
-
-export function loadConfig(overrides?: Partial<{ dryRun: boolean }>): AppConfig {
-  return parseConfig(overrides, false);
-}
-
-/** Load config for public-only CLI commands (no API keys required). */
-export function loadPublicConfig(): AppConfig {
-  return parseConfig(undefined, true);
-}
-
-function parseConfig(
-  overrides?: Partial<{ dryRun: boolean }>,
-  allowMissingKeys = false,
-): AppConfig {
-  const lowerPrice = Number(process.env.GRID_LOWER_PRICE);
-  const upperPrice = Number(process.env.GRID_UPPER_PRICE);
-
-  const raw = {
-    phemex: {
-      apiKey:
-        process.env.PHEMEX_API_KEY?.trim() ||
-        (allowMissingKeys ? "public" : ""),
-      apiSecret:
-        process.env.PHEMEX_API_SECRET?.trim() ||
-        (allowMissingKeys ? "public" : ""),
-      baseUrl: process.env.PHEMEX_BASE_URL ?? "https://api.phemex.com",
-    },
-    trading: {
-      symbol: normalizeSymbol(process.env.PHEMEX_SYMBOL ?? "BTCUSDT"),
-      gridMode: (process.env.GRID_MODE ?? "arithmetic") as GridMode,
-      lowerPrice,
-      upperPrice,
-      levels: Number(process.env.GRID_LEVELS ?? 10),
-      orderSize: Number(process.env.GRID_ORDER_SIZE ?? 0.001),
-      posSide: (process.env.POS_SIDE ?? "Merged") as "Merged" | "Long" | "Short",
-      maxQuoteExposure: process.env.MAX_QUOTE_EXPOSURE
-        ? Number(process.env.MAX_QUOTE_EXPOSURE)
-        : undefined,
-      stopLossPrice: process.env.STOP_LOSS_PRICE
-        ? Number(process.env.STOP_LOSS_PRICE)
-        : undefined,
-      takeProfitPrice: process.env.TAKE_PROFIT_PRICE
-        ? Number(process.env.TAKE_PROFIT_PRICE)
-        : undefined,
-      pollIntervalMs: Number(process.env.POLL_INTERVAL_MS ?? 5000),
-      dryRun: overrides?.dryRun ?? process.env.DRY_RUN === "true",
-    },
-    ai: {
-      enabled: process.env.AI_ENABLED !== "false",
-      reoptimizeIntervalMs: Number(process.env.AI_REOPTIMIZE_INTERVAL_MS ?? 300_000),
-      rsiPeriod: Number(process.env.AI_RSI_PERIOD ?? 14),
-      emaFast: Number(process.env.AI_EMA_FAST ?? 12),
-      emaSlow: Number(process.env.AI_EMA_SLOW ?? 26),
-      atrPeriod: Number(process.env.AI_ATR_PERIOD ?? 14),
-      minConfidence: Number(process.env.AI_MIN_CONFIDENCE ?? 0.3),
-    },
-    logLevel: process.env.LOG_LEVEL ?? "info",
-  };
-
-  const parsed = ConfigSchema.safeParse(raw);
+export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
+  const parsed = configSchema.safeParse(env);
   if (!parsed.success) {
-    const issues = parsed.error.issues
-      .map((i) => `  - ${i.path.join(".")}: ${i.message}`)
-      .join("\n");
-    throw new Error(`Invalid configuration:\n${issues}`);
+    const details = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("\n");
+    throw new Error(`Invalid configuration:\n${details}`);
   }
-
-  if (parsed.data.trading.lowerPrice >= parsed.data.trading.upperPrice) {
-    throw new Error("GRID_LOWER_PRICE must be less than GRID_UPPER_PRICE");
-  }
-
-  if (parsed.data.ai.emaFast >= parsed.data.ai.emaSlow) {
-    throw new Error("AI_EMA_FAST must be less than AI_EMA_SLOW");
-  }
-
   return parsed.data;
 }
+
+export const ENDPOINTS = {
+  clob: "https://clob.polymarket.com",
+  gamma: "https://gamma-api.polymarket.com",
+  data: "https://data-api.polymarket.com",
+} as const;

@@ -1,13 +1,23 @@
 import pino from "pino";
+import type { AppConfig } from "../config/index.js";
 
-export type Logger = pino.Logger;
-
-export function createLogger(level = "info"): Logger {
-  const isDev = process.env.NODE_ENV !== "production";
-
+export function createLogger(config: Pick<AppConfig, "LOG_LEVEL" | "LOG_PRETTY">) {
   return pino({
-    level,
-    transport: isDev
+    level: config.LOG_LEVEL,
+    redact: {
+      paths: [
+        "PRIVATE_KEY",
+        "privateKey",
+        "apiKey",
+        "apiSecret",
+        "passphrase",
+        "creds.key",
+        "creds.secret",
+        "creds.passphrase",
+      ],
+      censor: "[REDACTED]",
+    },
+    transport: config.LOG_PRETTY
       ? {
           target: "pino-pretty",
           options: {
@@ -19,3 +29,5 @@ export function createLogger(level = "info"): Logger {
       : undefined,
   });
 }
+
+export type Logger = ReturnType<typeof createLogger>;

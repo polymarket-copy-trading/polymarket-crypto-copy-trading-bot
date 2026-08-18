@@ -1,6 +1,10 @@
 node_modules/
 dist/
 .env
-*.log
+.env.local
+data/
+*.db
+*.db-journal
 coverage/
 .DS_Store
+*.log

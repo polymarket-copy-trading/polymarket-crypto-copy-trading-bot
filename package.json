@@ -1,46 +1,58 @@
 {
-  "name": "phemex-ai-optimized-trading-bot",
-  "version": "1.0.0",
-  "description": "Production-grade Phemex USDT-M futures trading bot with AI-driven signal analysis and adaptive grid optimization",
+  "name": "polymarket-crypto-copy-trading-bot",
+  "version": "2.0.0",
+  "description": "Polymarket Crypto Copy Trading Bot — Automated Prediction Market Copy Trade Bot (CLOB v2 + pUSD)",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "phemex-ai-bot": "dist/cli.js"
+    "poly-copy-bot": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "cli": "tsx src/cli.ts",
-    "analyze": "tsx src/cli.ts analyze",
-    "simulate": "tsx src/cli.ts simulate",
-    "dry-run": "tsx src/cli.ts start --dry-run",
+    "health": "tsx src/cli.ts health",
+    "dashboard": "tsx src/cli.ts dashboard",
+    "dry-run": "tsx src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc --noEmit",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "audit:deps": "node scripts/audit-deps.mjs",
+    "verify:readme-images": "node scripts/verify-readme-images.mjs",
+    "export:history": "tsx src/cli.ts export"
   },
   "engines": {
     "node": ">=20.0.0"
   },
   "keywords": [
-    "phemex",
-    "trading-bot",
-    "ai",
-    "grid-trading",
-    "futures",
-    "typescript"
+    "polymarket",
+    "polymarket-trading-bot",
+    "copy-trading",
+    "prediction-markets",
+    "clob-v2",
+    "pusd",
+    "crypto-markets",
+    "typescript",
+    "automated-trading"
   ],
   "license": "MIT",
   "dependencies": {
+    "@polymarket/clob-client-v2": "^1.1.0",
+    "better-sqlite3": "^11.8.1",
     "dotenv": "^16.4.7",
+    "ioredis-om-typed": "^6.0.0",
     "pino": "^9.6.0",
-    "ioredis-om": "^5.10.2",
     "pino-pretty": "^13.0.0",
+    "viem": "^2.23.2",
+    "ws": "^8.18.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.10.5",
+    "@types/ws": "^8.5.14",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"

@@ -351,9 +351,9 @@ MIT — see [LICENSE](LICENSE).
 >
 > I am happy to discuss architecture, leader selection, risk settings, and live trading results with anyone building on this stack.
 >
-> **Telegram:** [@tradingtermin](https://t.me/tradingtermin)
+> **Telegram:** [@js_trading_ceo](https://t.me/js_trading_ceo)
 
-**Contact:** [@tradingtermin](https://t.me/tradingtermin)
+**Contact:** [@js_trading_ceo](https://t.me/js_trading_ceo)
 
 ---
 

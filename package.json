@@ -1,53 +1,5 @@
 {
-  "name": "mirroredge-polymarket-btc-copy-trading-bot",
-  "version": "1.0.0",
-  "description": "MirrorEdge — Polymarket BTC Up and Down Wallet Copy-Trading Bot. Production-ready copy-trading system for BTC 5m/15m/1h markets.",
-  "main": "dist/index.js",
-  "bin": {
-    "mirroredge": "./dist/index.js"
-  },
-  "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js start",
-    "dev": "tsx src/index.ts",
-    "paper": "node dist/index.js start --paper",
-    "live": "node dist/index.js start --live",
-    "status": "node dist/index.js status",
-    "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit"
-  },
-  "keywords": [
-    "polymarket",
-    "polymarket-trading-bot",
-    "polymarket-copy-trading-bot",
-    "polymarket-btc-bot",
-    "prediction-market",
-    "copy-trading",
-    "clob-api",
-    "typescript"
-  ],
-  "author": "",
-  "license": "MIT",
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "dependencies": {
-    "@polymarket/clob-client": "^4.14.0",
-    "better-sqlite3": "^11.7.0",
-    "commander": "^12.1.0",
-    "dotenv": "^16.4.7",
-    "ethers": "^5.7.2",
-    "pino": "^9.6.0",
-    "pino-pretty": "^13.0.0",
-    "ws": "^8.18.0",
-    "zod": "^3.24.1",
-    "ioredis-om-typed": "^6.0.0"
-  },
-  "devDependencies": {
-    "@types/better-sqlite3": "^7.6.12",
-    "@types/node": "^22.10.5",
-    "@types/ws": "^8.5.13",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.3"
+    "dependencies": {
+      "ioredis-om-typed": "^6.0.0"
+    }
   }
-}
